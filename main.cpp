@@ -1,98 +1,69 @@
 #include <iostream>
-#include <fstream>
-#include <string>
-#include <algorithm>
-#include <iterator>
-#include <map>
 #include <vector>
+#include <set>
+#include <map>
+#include <fstream>
+#include <algorithm>
+#include <utility>
 
-constexpr unsigned int MB256BT = 256 * 1024 * 1024; // количество байт в 256 Мб
-constexpr unsigned int NUMELEMENT64 = MB256BT / 8; //Количество элементов в памяти
 
-uint64_t convertCharToUInt64(const unsigned char* buf) {
-    uint64_t num(0);
-    for (int i = 7; i > 0; i--) {
-        num += buf[i];
-        num = num << 8;
+using namespace std;
+
+ofstream result("out.txt");
+map<string, fstream *> file_map;
+
+vector<string> names_files = {"t0.txt", "t1.txt", "t2.txt", "t3.txt"};
+vector<int> vec_num(names_files.size());
+
+pair<bool, int> getFromFile(const string &name) {
+    auto it = file_map.find(name);
+    int k;
+    if (!it->second->eof()) {
+       *(it->second) >> k;
+       return make_pair(true, k);
     }
-    num += buf[0];
-    return num;
+    it->second->close();
+    return make_pair(false, -1);
 }
 
-void bubbleSort(uint64_t* arr, size_t &size) {
-    for (size_t i = 0; i < size; i++)
-        for (size_t y = 0; y < size; y++)
-            if (arr[y] > arr[y + 1])
-                std::swap(arr[y], arr[y + 1]);
+void writeOutFile(int i) {
+    if (result.is_open()) {
+        result << i << " ";
+    }
 }
 
-void mysort(uint64_t* beg, uint64_t* end) {
-    if (beg == end)
-        return;
-    uint64_t* l = beg;
-    uint64_t* r = end;
-    uint64_t* piv = l++;
-    while (l != r) {
-        if (*l < *piv)
-            l++;
+int main() {
+    for(auto &i : names_files) {
+        fstream *file = new fstream(i);
+        file_map.emplace(i, file); 
+    }
+    bool firstTime = true;
+    map<string, int> income;
+    for(auto item : file_map) {
+        auto tempPair = getFromFile(item.first);
+        if (tempPair.first) {
+            income[item.first] = tempPair.second;
+        }
         else {
-            while ((l != --r) && (*piv < *r));
-            std::swap(l, r);
+            file_map.erase(item.first);
         }
     }
-    --l;
-    std::swap(l, r);
-    mysort(beg, l);
-    mysort(r, end);
-}
-
-int main(int argc, char** argv) {
-    //if (argc != 3) {
-    //    std::cout << "Error input parametrs";
-    //    return 1;
-    //}
-    //char* fileInputName = argv[1];
-    //char* fileOutputName = argv[2];
-
-    const std::string fileInputName = "D:\\temp\\bigFile\\myfile";
-    const std::string fileOutputName = "D:\\temp\\bigFile\\outfile";
-    const std::string fileTempName = "file_temp";
-
-    std::ifstream fileInput(fileInputName, std::ios::in | std::ios::binary);
-    std::ofstream fileOutput(fileOutputName, std::ios::out | std::ios::binary);
-
-    if (!fileInput.is_open()) {
-        std::cout << "Error open input file";
-        return 2;
+    while(file_map.size() > 0) {
+        auto minIt = min_element(income.begin(), income.end(), [](const pair<string, int> &lhs, 
+                                    const pair<string, int> &rhs) {return lhs.second < rhs.second;});
+        writeOutFile(minIt->second);
+        auto tempPair = getFromFile(minIt->first);
+        if (tempPair.first) {
+            income[minIt->first] = tempPair.second;
+        }
+        else {
+            file_map.erase(minIt->first);
+            income.erase(minIt->first);
+        }
+           // income.find(minIt.first) = getFromFile(minIt.first).second;
+            
+        
     }
-    uint64_t* buff = new uint64_t[NUMELEMENT64];
-    size_t countFiles(0);
-    while (!fileInput.eof()) {
-        fileInput.read((char*)buff, MB256BT);
-       // std::sort(buff, (buff + NUMELEMENT64));
-        std::ofstream partFile(fileTempName + std::to_string(countFiles), std::ios::out | std::ios::binary);
-        partFile.write((char*)buff, MB256BT);
-        partFile.close();
-        countFiles++;
-    }
-    fileInput.close();
-    delete[] buff;
     
-    std::vector<uint64_t> vec(countFiles);
-    std::ifstream* files = new std::ifstream[countFiles];
-    uint64_t* ch = new uint64_t;
-
-    for (int i = 0; i <= countFiles; i++) {
-        *(fl+i).(fileTempName + std::to_string(countFiles), std::ios::in | std::ios::binary);
-        fl.seekp(vec[i].second, std::ios::beg);
-        fl.read((char*)ch, sizeof(uint64_t));
-        it.second += sizeof(uint64_t);
-        auto ds = std::distance(lstFiles.firbegin(), it);
-        vec[ds] = ch;
-    }
-
-
-
-
-    return 0;
+	return 0;
 }
